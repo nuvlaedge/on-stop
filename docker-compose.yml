@@ -1,0 +1,10 @@
+version: "3.7"
+
+services:
+  on-stop:
+    build: .
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - nuvlabox.component=True
+      - nuvlabox.deployment=production
