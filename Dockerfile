@@ -14,12 +14,10 @@ WORKDIR /opt/nuvlabox/
 
 COPY code/ LICENSE /opt/nuvlabox/
 
-###
-###
-###
+RUN pip install -r requirements.txt
 
 VOLUME /srv/nuvlabox/shared
 
 ONBUILD RUN ./license.sh
 
-#ENTRYPOINT ["./app.py"]
+ENTRYPOINT ["./run.py"]
