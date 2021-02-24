@@ -25,5 +25,5 @@ if len(sys.argv) > 1 and "paused".startswith(sys.argv[1].lower()):
 
     myself.pause()
 else:
-    pass
+    logging.info('to be implemented')
 
