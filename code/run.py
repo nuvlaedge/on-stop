@@ -11,6 +11,7 @@ import docker
 import logging
 import socket
 import sys
+import time
 
 logging.basicConfig(format='%(levelname)s - %(module)s - L%(lineno)s: %(message)s', level='INFO')
 
@@ -40,7 +41,19 @@ else:
     remote_managers = [rm.get('NodeID') for rm in swarm_info.get('RemoteManagers', [])]
     i_am_manager = True if node_id in remote_managers else False
 
+    # local data-source (DG) containers must go
+    data_source_containers = docker_client.containers.list(filter={'label': 'nuvlabox.data-source-container'})
+    for ds_container in data_source_containers:
+        logging.info(f'Stopping data source container {ds_container.name}')
+        try:
+            ds_container.stop()
+        except Exception as e:
+            logging.error(f'Unable to stop data source container {ds_container.name}: {str(e)}')
+
+    network_driver = 'bridge'
+    cluster_managers = []
     if i_am_manager:
+        network_driver = 'overlay'
         cluster_nodes = docker_client.nodes.list()
 
         # remove label
@@ -53,14 +66,48 @@ else:
         logging.info(f'Removing node label {label} from this node ({node_id})')
         node.update(node_spec)
 
-        # if len(cluster_nodes) > 1:
+        # if len(cluster_manager_nodes) = 1, then this is the last manager and the DG services will cease to exist
+        cluster_managers = [node for node in cluster_nodes if node.attrs.get('Spec', {}).get('Role') == 'manager'
+                            and node.attrs.get('Status', {}).get('State') == 'ready']
 
+        if len(cluster_managers) == 1:
+            dg_services = docker_client.services.list(filters={'label': 'nuvlabox.data-gateway'})
+            for dg_svc in dg_services:
+                try:
+                    dg_svc.remove()
+                except docker.errors.NotFound:
+                    # maybe the service has been removed in the meantime
+                    continue
+                except Exception as e:
+                    logging.warning(f'Unable to remove service {dg_svc.name}. Trying a second time')
+                    time.sleep(5)
+                    try:
+                        dg_svc.remove()
+                    except:
+                        logging.error(f'Cannot remove {dg_svc.name}')
 
+    # delete DG network - only on the last Swarm manager or a standalone Docker machine
+    if (i_am_manager and len(cluster_managers) == 1) or not is_swarm_enabled:
+        custom_networks = docker_client.networks.list(filters={'label': 'nuvlabox.network', 'driver': network_driver})
+        for network in custom_networks:
+            network.reload()
+            if network.attrs.get('Containers'):
+                for attached_container in network.attrs.get('Containers').keys():
+                    try:
+                        network.disconnect(attached_container)
+                    except docker.errors.NotFound:
+                        continue
 
-
-    # if manager:
-    # check if node has nuvlabox label and remove that label
-
-
-    # if in cluster mode, manager, and last node, also get rid of the ack and DG services/networks (also the traefik service) + nbmosquitto service as well
+            try:
+                network.remove()
+            except docker.errors.NotFound:
+                # maybe the net has been removed in the meantime
+                continue
+            except Exception as e:
+                logging.warning(f'Unable to remove network {network.name}. Trying a second time')
+                time.sleep(5)
+                try:
+                    network.remove()
+                except:
+                    logging.error(f'Cannot remove {network.name}')
 
