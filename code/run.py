@@ -28,6 +28,13 @@ if len(sys.argv) > 1 and "paused".startswith(sys.argv[1].lower()):
 else:
     logging.info('Starting NuvlaBox deep cleanup')
 
+    try:
+        docker_client.containers.prune(filters={'label': 'nuvlabox.on-stop'})
+    except:
+        pass
+    else:
+        logging.info('Pruned old on-stop containers')
+
     info = docker_client.info()
 
     swarm_info = info.get('Swarm', {})
@@ -38,11 +45,11 @@ else:
 
     is_swarm_enabled = True if node_id and local_node_state != "inactive" else False
 
-    remote_managers = [rm.get('NodeID') for rm in swarm_info.get('RemoteManagers', [])]
+    remote_managers = [rm.get('NodeID') for rm in swarm_info.get('RemoteManagers')] if swarm_info.get('RemoteManagers') else []
     i_am_manager = True if node_id in remote_managers else False
 
     # local data-source (DG) containers must go
-    data_source_containers = docker_client.containers.list(filter={'label': 'nuvlabox.data-source-container'})
+    data_source_containers = docker_client.containers.list(filters={'label': 'nuvlabox.data-source-container'})
     for ds_container in data_source_containers:
         logging.info(f'Stopping data source container {ds_container.name}')
         try:
@@ -71,8 +78,10 @@ else:
                             and node.attrs.get('Status', {}).get('State') == 'ready']
 
         if len(cluster_managers) == 1:
+            logging.info('This NuvlaBox was the last cluster manager')
             dg_services = docker_client.services.list(filters={'label': 'nuvlabox.data-gateway'})
             for dg_svc in dg_services:
+                logging.info(f'Deleting service {dg_svc.name}')
                 try:
                     dg_svc.remove()
                 except docker.errors.NotFound:
@@ -86,18 +95,47 @@ else:
                     except:
                         logging.error(f'Cannot remove {dg_svc.name}')
 
-    # delete DG network - only on the last Swarm manager or a standalone Docker machine
+    # delete DG - only on the last Swarm manager or a standalone Docker machine
     if (i_am_manager and len(cluster_managers) == 1) or not is_swarm_enabled:
+        logging.info('This NuvlaBox was either the last cluster manager or a standalone node')
+        if i_am_manager:
+            dg_components = docker_client.services.list(filters={'label': 'nuvlabox.data-gateway'})
+        else:
+            dg_components = docker_client.containers.list(filters={'label': 'nuvlabox.data-gateway'})
+        for dg_svc in dg_components:
+            logging.info(f'Deleting component {dg_svc.name}')
+            try:
+                if i_am_manager:
+                    dg_svc.remove()
+                else:
+                    dg_svc.remove(force=True)
+            except docker.errors.NotFound:
+                # maybe the service has been removed in the meantime
+                continue
+            except Exception as e:
+                logging.warning(f'Unable to remove component {dg_svc.name}. Trying a second time')
+                time.sleep(5)
+                try:
+                    if i_am_manager:
+                        dg_svc.remove()
+                    else:
+                        dg_svc.remove(force=True)
+                except:
+                    logging.error(f'Cannot remove {dg_svc.name}')
+
+        logging.info('Preparing to delete additional NuvlaBox networks')
         custom_networks = docker_client.networks.list(filters={'label': 'nuvlabox.network', 'driver': network_driver})
         for network in custom_networks:
             network.reload()
             if network.attrs.get('Containers'):
                 for attached_container in network.attrs.get('Containers').keys():
+                    logging.info(f'Disconnecting container {attached_container} from network {network.name}')
                     try:
                         network.disconnect(attached_container)
                     except docker.errors.NotFound:
                         continue
 
+            logging.info(f'Removing network {network.name}')
             try:
                 network.remove()
             except docker.errors.NotFound:
