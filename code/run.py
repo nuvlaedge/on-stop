@@ -77,24 +77,6 @@ else:
         cluster_managers = [node for node in cluster_nodes if node.attrs.get('Spec', {}).get('Role') == 'manager'
                             and node.attrs.get('Status', {}).get('State') == 'ready']
 
-        if len(cluster_managers) == 1:
-            logging.info('This NuvlaBox was the last cluster manager')
-            dg_services = docker_client.services.list(filters={'label': 'nuvlabox.data-gateway'})
-            for dg_svc in dg_services:
-                logging.info(f'Deleting service {dg_svc.name}')
-                try:
-                    dg_svc.remove()
-                except docker.errors.NotFound:
-                    # maybe the service has been removed in the meantime
-                    continue
-                except Exception as e:
-                    logging.warning(f'Unable to remove service {dg_svc.name}. Trying a second time')
-                    time.sleep(5)
-                    try:
-                        dg_svc.remove()
-                    except:
-                        logging.error(f'Cannot remove {dg_svc.name}')
-
     # delete DG - only on the last Swarm manager or a standalone Docker machine
     if (i_am_manager and len(cluster_managers) == 1) or not is_swarm_enabled:
         logging.info('This NuvlaBox was either the last cluster manager or a standalone node')
@@ -144,7 +126,7 @@ else:
             except Exception as e:
                 logging.warning(f'Unable to remove network {network.name}. Trying a second time')
                 time.sleep(5)
-                try:
+                try:    
                     network.remove()
                 except:
                     logging.error(f'Cannot remove {network.name}')
