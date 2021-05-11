@@ -1,11 +1,13 @@
 # NuvlaBox On-Stop
 
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)](https://github.com/nuvlabox/on-stop/graphs/commit-activity)
-
-
 [![GitHub issues](https://img.shields.io/github/issues/nuvlabox/on-stop?style=for-the-badge&logo=github&logoColor=white)](https://GitHub.com/nuvlabox/on-stop/issues/)
 [![Docker pulls](https://img.shields.io/docker/pulls/nuvlabox/on-stop?style=for-the-badge&logo=Docker&logoColor=white)](https://cloud.docker.com/u/nuvlabox/repository/docker/nuvlabox/on-stop)
 [![Docker image size](https://img.shields.io/microbadger/image-size/nuvlabox/on-stop?style=for-the-badge&logo=Docker&logoColor=white)](https://cloud.docker.com/u/nuvlabox/repository/docker/nuvlabox/on-stop)
+
+
+![CI Build](https://github.com/nuvlabox/on-stop/actions/workflows/main.yml/badge.svg)
+![CI Release](https://github.com/nuvlabox/on-stop/actions/workflows/release.yml/badge.svg)
 
 
 **This repository contains the source code for the NuvlaBox On-Stop - the microservice which is responsible for the [NuvlaBox](https://sixsq.com/products-and-services/nuvlabox/overview) total cleanup after stopping or deleting the NBE**
