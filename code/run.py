@@ -18,10 +18,11 @@ logging.basicConfig(format='%(levelname)s - %(module)s - L%(lineno)s: %(message)
 docker_client = docker.from_env()
 if len(sys.argv) > 1 and "paused".startswith(sys.argv[1].lower()):
     logging.info('Pausing myself...')
+    my_hostname = socket.gethostname()
     try:
-        myself = docker_client.containers.get(socket.gethostname())
+        myself = docker_client.containers.get(my_hostname)
     except docker.errors.NotFound:
-        logging.error(f'Cannot find this container by hostname: {socket.gethostname()}. Cannot proceed')
+        logging.error(f'Cannot find this container by hostname: {my_hostname}. Cannot proceed')
         raise
 
     myself.pause()
