@@ -17,6 +17,6 @@ chmod +x get-deps.sh
 
 docker build . -t local_test_image
 
-docker run --entrypoint /bin/sh -v ./:/deptree --workdir /deptree local_test_image /deptree/get-dependencies-tree.sh
+docker run --entrypoint /bin/sh -v $(pwd):/deptree --workdir /deptree local_test_image /deptree/get-dependencies-tree.sh
 
 rm get-deps.sh
