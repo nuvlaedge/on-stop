@@ -4,7 +4,7 @@ cat>get-deps.sh <<EOF
 #!/bin/sh
 
 pip install pipdeptree pip-licenses graphviz
-apt update && apt install -y graphviz
+apk update && apk add graphviz
 
 ignore_pkgs="pipdeptree,pip-licenses,graphviz,pip,wheel,setuptools"
 
