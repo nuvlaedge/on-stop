@@ -16,8 +16,8 @@ LABEL org.opencontainers.image.authors="support@sixsq.com"
 LABEL org.opencontainers.image.created=${GIT_BUILD_TIME}
 LABEL org.opencontainers.image.url=${PROJECT_URL}
 LABEL org.opencontainers.image.vendor="SixSq SA"
-LABEL org.opencontainers.image.title="NuvlaBox System Manager"
-LABEL org.opencontainers.image.description="Manages the overall state of the NuvlaBox Engine"
+LABEL org.opencontainers.image.title="NuvlaBox On Stop"
+LABEL org.opencontainers.image.description="Performs a graceful shutdown of all NuvlaBox Engine resources"
 
 WORKDIR /opt/nuvlabox/
 
