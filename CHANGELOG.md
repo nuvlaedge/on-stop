@@ -3,5 +3,4 @@
 ### Added
 ### Changed
  - Use common base image for all NE components
-### Changed
-- Downgraded Python base image version to commonn 3.8 NE components 
+ - Downgraded Python base image version to commonn 3.8 NE components 
