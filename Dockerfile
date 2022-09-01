@@ -17,16 +17,16 @@ LABEL org.opencontainers.image.authors="support@sixsq.com"
 LABEL org.opencontainers.image.created=${GIT_BUILD_TIME}
 LABEL org.opencontainers.image.url=${PROJECT_URL}
 LABEL org.opencontainers.image.vendor="SixSq SA"
-LABEL org.opencontainers.image.title="NuvlaBox On Stop"
-LABEL org.opencontainers.image.description="Performs a graceful shutdown of all NuvlaBox Engine resources"
+LABEL org.opencontainers.image.title="NuvlaEdge On Stop"
+LABEL org.opencontainers.image.description="Performs a graceful shutdown of all NuvlaEdge Engine resources"
 
-WORKDIR /opt/nuvlabox/
+WORKDIR /opt/nuvlaedge/
 
-COPY code/ LICENSE /opt/nuvlabox/
+COPY code/ LICENSE /opt/nuvlaedge/
 
 RUN pip install -r requirements.txt
 
-VOLUME /srv/nuvlabox/shared
+VOLUME /srv/nuvlaedge/shared
 
 ONBUILD RUN ./license.sh
 

@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 
-""" NuvlaBox On-Stop
+""" NuvlaEdge On-Stop
 
 To be executed on every stop or full shutdown of the NBE, in order to ensure a proper cleanup of dangling resources
 
@@ -27,10 +27,10 @@ if len(sys.argv) > 1 and "paused".startswith(sys.argv[1].lower()):
 
     myself.pause()
 else:
-    logging.info('Starting NuvlaBox deep cleanup')
+    logging.info('Starting NuvlaEdge deep cleanup')
 
     try:
-        docker_client.containers.prune(filters={'label': 'nuvlabox.on-stop'})
+        docker_client.containers.prune(filters={'label': 'nuvlaedge.on-stop'})
     except:
         pass
     else:
@@ -50,7 +50,7 @@ else:
     i_am_manager = True if node_id in remote_managers else False
 
     # local data-source (DG) containers must go
-    data_source_containers = docker_client.containers.list(filters={'label': 'nuvlabox.data-source-container'})
+    data_source_containers = docker_client.containers.list(filters={'label': 'nuvlaedge.data-source-container'})
     for ds_container in data_source_containers:
         logging.info(f'Stopping data source container {ds_container.name}')
         try:
@@ -65,7 +65,7 @@ else:
         cluster_nodes = docker_client.nodes.list()
 
         # remove label
-        label = 'nuvlabox'
+        label = 'nuvlaedge'
         node = docker_client.nodes.get(node_id)
         node_spec = node.attrs['Spec']
         node_labels = node_spec.get('Labels', {})
@@ -80,11 +80,11 @@ else:
 
     # delete DG - only on the last Swarm manager or a standalone Docker machine
     if (i_am_manager and len(cluster_managers) == 1) or not is_swarm_enabled:
-        logging.info('This NuvlaBox was either the last cluster manager or a standalone node')
+        logging.info('This NuvlaEdge was either the last cluster manager or a standalone node')
         if i_am_manager:
-            dg_components = docker_client.services.list(filters={'label': 'nuvlabox.data-gateway'})
+            dg_components = docker_client.services.list(filters={'label': 'nuvlaedge.data-gateway'})
         else:
-            dg_components = docker_client.containers.list(filters={'label': 'nuvlabox.data-gateway'})
+            dg_components = docker_client.containers.list(filters={'label': 'nuvlaedge.data-gateway'})
         for dg_svc in dg_components:
             logging.info(f'Deleting component {dg_svc.name}')
             try:
@@ -106,8 +106,8 @@ else:
                 except:
                     logging.error(f'Cannot remove {dg_svc.name}')
 
-        logging.info('Preparing to delete additional NuvlaBox networks')
-        custom_networks = docker_client.networks.list(filters={'label': 'nuvlabox.network', 'driver': network_driver})
+        logging.info('Preparing to delete additional NuvlaEdge networks')
+        custom_networks = docker_client.networks.list(filters={'label': 'nuvlaedge.network', 'driver': network_driver})
         for network in custom_networks:
             network.reload()
             if network.attrs.get('Containers'):
@@ -127,8 +127,7 @@ else:
             except Exception as e:
                 logging.warning(f'Unable to remove network {network.name}. Trying a second time')
                 time.sleep(5)
-                try:    
+                try:
                     network.remove()
                 except:
                     logging.error(f'Cannot remove {network.name}')
-
