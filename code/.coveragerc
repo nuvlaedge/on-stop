@@ -1,0 +1,6 @@
+[run]
+relative_files = True
+include =
+  on_stop/*
+  tests/*
+branch = True
